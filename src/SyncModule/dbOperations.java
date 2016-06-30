@@ -28,6 +28,7 @@ public class dbOperations {
     MongoClient mongoClient;
     MongoDatabase mongoDatabase;
     
+    MongoCollection<Document> userCollection;
     MongoCollection<Document> dataCollection;
     MongoCollection<Document> insertCollection;
     MongoCollection<Document> updateCollection;
@@ -42,7 +43,8 @@ public class dbOperations {
             mongoClient = new MongoClient( "localhost" , 27017 );
             // 连接到数据库
             mongoDatabase = mongoClient.getDatabase("SyncMoudle");  
-           
+            
+            userCollection = mongoDatabase.getCollection("users");
             dataCollection = mongoDatabase.getCollection(user + "_data");
             insertCollection = mongoDatabase.getCollection(user + "_insert");
             updateCollection = mongoDatabase.getCollection(user + "_update");
@@ -99,6 +101,23 @@ public class dbOperations {
         
         return chgList.toString();
 		
+	}
+	
+	public void UpdateVersion(int version)
+	{
+	    Document query = new Document();
+        query.put("user", user);
+        
+        Document newDoc = new Document();
+        newDoc.put("version", version);
+        
+        
+        UpdateOptions options = new UpdateOptions();
+        //如果这里是true，当查不到结果的时候会添加一条newDoc,默认为false
+        options.upsert(true);
+        
+        Document NewDoc = new Document("$set", newDoc);  
+        userCollection.updateOne(query, NewDoc,options);
 	}
 	
 	public void InsertRecord(String Data)

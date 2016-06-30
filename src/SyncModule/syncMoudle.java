@@ -105,6 +105,13 @@ public class syncMoudle {
 		//version  = UUID.randomUUID().toString().replace("-", "");
 	}
 	
+	public void UpdateVersion(int newVersion)
+	{
+	    System.out.println("UpdateVersion: " + newVersion);
+	    version = newVersion;
+	    db.UpdateVersion(newVersion);
+	}
+	
 	public void DropCollections()
 	{
 	    db.DropChgColletions();

@@ -43,7 +43,10 @@ public class Test {
 			if(!result.contains("Server_Fail"))
 			{
 			    mySync.DropCollections();
+			    JSONObject serverRes = new JSONObject(result);
+                mySync.UpdateVersion(serverRes.getInt("version"));
 			}
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -75,7 +78,10 @@ public class Test {
             if(!result.contains("Server_Fail"))
             {
                 mySync.DropCollections();
+                JSONObject serverRes = new JSONObject(result);
+                mySync.UpdateVersion(serverRes.getInt("version"));
             }
+            
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
