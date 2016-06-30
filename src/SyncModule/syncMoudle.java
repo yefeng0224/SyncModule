@@ -12,19 +12,22 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.UUID;
 
+import org.json.JSONObject;
+
 public class syncMoudle {
 	
 	private static final int TIMEOUT = 10000;// 10��
 	private static int version = 0;
 	
-	public syncMoudle()
+	private dbOperations db;
+	public  syncMoudle(String user)
 	{
-		
+	    db = new dbOperations(user);
 	}
 	
 	public String PostChangeList(String urlPath) throws IOException
 	{
-		String jsonData = new dbOperations().getChangeList();
+		String jsonData = db.getChangeList();
 		
 		PrintWriter out = null;
         BufferedReader in = null;
@@ -44,8 +47,8 @@ public class syncMoudle {
             // ��ȡURLConnection�����Ӧ�������
             out = new PrintWriter(conn.getOutputStream());
             // �����������
-            out.print("userid=yefeng&password=123456&version=" + version + "&list=" + jsonData + "&data=[{\"_id\":\"123asdase2331212\", \"value\":{\"title\":\"123\"}},"
-                    + "{\"_id\":\"123asdase2331213\", \"value\":{\"title\":\"123\"}}]");
+            //out.print("userid=yefeng&password=123456&version=" + version + "&data={\"DELETE\":[],\"INSERT\":[],\"UPDATE\":[]}");
+            out.print("userid=yefeng&password=123456&version=" + version + "&data=" + java.net.URLEncoder.encode(jsonData,"UTF-8"));
             // flush������Ļ���
             out.flush();
             
@@ -80,23 +83,31 @@ public class syncMoudle {
         return "send post error!";
 	}
 	
-	public void InsertItem(String JsonData)
+	public void InsertItem(JSONObject JsonData)
 	{
 		String uuid = UUID.randomUUID().toString().replace("-", "");
-		new dbOperations().InsertOrUpdateRecord(JsonData, uuid);
+		JsonData.put("_id",uuid);
+		db.InsertRecord(JsonData.toString());
 		//version = uuid;
 	}
 	
-	public void UpdateItem(String JsonData, String uuid)
+	public void UpdateItem(JSONObject JsonData, String uuid)
 	{
-		new dbOperations().InsertOrUpdateRecord(JsonData, uuid);
+		db.UpdateRecord(JsonData.toString(), uuid);
 		//version  = UUID.randomUUID().toString().replace("-", "");
 	}
 	
 	public void DeleteItem(String uuid)
 	{
-		new dbOperations().DeleteRecord(uuid);
+	    JSONObject JsonData = new JSONObject();
+	    JsonData.put("_id", uuid);
+		db.DeleteRecord(JsonData.toString());
 		//version  = UUID.randomUUID().toString().replace("-", "");
+	}
+	
+	public void DropCollections()
+	{
+	    db.DropChgColletions();
 	}
 	
 	public void GetAllItem()

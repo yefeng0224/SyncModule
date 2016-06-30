@@ -6,56 +6,141 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.mongodb.MongoClient;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.UpdateOptions;
+
+import org.bson.Document;
+
 public class dbOperations {
-	
+    private boolean isConnected;
+    private String user;
+    public dbOperations (String user)
+    {
+        this.user = user;
+        isConnected = false;
+        connectMongo();
+    }
+    
+    MongoClient mongoClient;
+    MongoDatabase mongoDatabase;
+    
+    MongoCollection<Document> dataCollection;
+    MongoCollection<Document> insertCollection;
+    MongoCollection<Document> updateCollection;
+    MongoCollection<Document> deleteCollection;
+    
+	//for test
+    
+    private void connectMongo()
+    {
+        try
+        {
+            mongoClient = new MongoClient( "localhost" , 27017 );
+            // 连接到数据库
+            mongoDatabase = mongoClient.getDatabase("SyncMoudle");  
+           
+            dataCollection = mongoDatabase.getCollection(user + "_data");
+            insertCollection = mongoDatabase.getCollection(user + "_insert");
+            updateCollection = mongoDatabase.getCollection(user + "_update");
+            deleteCollection = mongoDatabase.getCollection(user + "_delete");
+            isConnected = true;
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        
+    }
+    
+    public void disconnectMongo()
+    {
+        if (mongoClient != null) {
+            mongoClient.close();
+            mongoClient = null;
+        }
+    }
+    
+    public boolean isConnected()
+    {
+        return isConnected;
+    }
+    
 	public String getChangeList() throws JSONException, UnsupportedEncodingException
 	{
-		String result = null;
-		JSONObject test = new JSONObject();
-		JSONArray testarray = new JSONArray();
-		//JSONObject item = new JSONObject();
-		//item.put("item1", java.net.URLEncoder.encode("11&33","UTF-8"));
-		testarray.put(java.net.URLEncoder.encode("11&33","UTF-8"));
-		//item = new JSONObject();
-		//item.put("item2","22");
-		testarray.put(java.net.URLEncoder.encode("221&44","UTF-8"));
-		test.append("data", testarray);
-		return testarray.toString();
-		/*
-		result = "hahasdsadsadsadsadsadasdsadsada" + "asdsadsadsadasdsadasdasdasdsadasd" + 
-				"hahasdsadsadsad&adsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  +
-				"hahasdsadsadsadsadsadasdsadsada"  +  "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  +  "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  +  "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  +  "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  + 
-				"hahasdsadsadsadsadsadasdsadsada"  + "hahasdsadsadsadsadsadasdsadsada"  ;
-		return result;
-		*/
+		JSONObject chgList = new JSONObject();
+		JSONObject item;
+		JSONArray array = new JSONArray();
+		FindIterable<Document> iterable = insertCollection.find();
+        MongoCursor<Document> cursor = iterable.iterator();
+        while (cursor.hasNext()) {
+            array.put(new JSONObject(cursor.tryNext().toJson()));
+        }
+        chgList.put("INSERT", array);
+        
+        array = new JSONArray();
+        iterable = updateCollection.find();
+        cursor = iterable.iterator();
+        while (cursor.hasNext()) {
+            array.put(new JSONObject(cursor.tryNext().toJson()));
+        }
+        chgList.put("UPDATE", array);
+        
+        array = new JSONArray();
+        iterable = deleteCollection.find();
+        cursor = iterable.iterator();
+        while (cursor.hasNext()) {
+            array.put(new JSONObject(cursor.tryNext().toJson()));
+        }
+        chgList.put("DELETE", array);
+        
+        return chgList.toString();
+		
 	}
 	
-	private void AddToChangeList(String uuid, String method)
+	public void InsertRecord(String Data)
 	{
-		//add to DB_data
-		//add to db_change
+	    Document Doc = Document.parse(Data);
+	    dataCollection.insertOne(Doc);
+	    insertCollection.insertOne(Doc);
 	}
 	
-	public void InsertOrUpdateRecord(String Data, String uuid)
+	public void UpdateRecord(String Data, String uuid)
+    {
+        Document query = new Document();
+        query.put("_id", uuid);
+        
+        UpdateOptions options = new UpdateOptions();
+        //如果这里是true，当查不到结果的时候会添加一条newDoc,默认为false
+        options.upsert(true);
+        
+        Document NewDoc = new Document("$set", Document.parse(Data));  
+        dataCollection.updateOne(query, NewDoc,options);
+        
+        updateCollection.updateOne(query, NewDoc,options);
+    }
+	
+	public void DeleteRecord(String Data)
 	{
-		AddToChangeList(uuid,"REPLACE");
+	    UpdateOptions options = new UpdateOptions();
+        //如果这里是true，当查不到结果的时候会添加一条newDoc,默认为false
+        options.upsert(true);
+	    Document Doc = Document.parse(Data);
+        dataCollection.deleteOne(Doc);
+        
+        Document NewDoc = new Document("$set", Document.parse(Data));
+        deleteCollection.updateOne(Doc,NewDoc,options);
+       
 	}
 	
-	public void DeleteRecord(String uuid)
+	public void DropChgColletions()
 	{
-		AddToChangeList(uuid,"DELETE");
+	    insertCollection.drop();
+	    updateCollection.drop();
+	    deleteCollection.drop();
 	}
 	
 	
