@@ -41,7 +41,7 @@ public class dbOperations {
         try
         {
             mongoClient = new MongoClient( "localhost" , 27017 );
-            // 连接到数据库
+            // 杩炴帴鍒版暟鎹簱
             mongoDatabase = mongoClient.getDatabase("SyncMoudle");  
             
             userCollection = mongoDatabase.getCollection("users");
@@ -113,7 +113,7 @@ public class dbOperations {
         
         
         UpdateOptions options = new UpdateOptions();
-        //如果这里是true，当查不到结果的时候会添加一条newDoc,默认为false
+        //濡傛灉杩欓噷鏄痶rue锛屽綋鏌ヤ笉鍒扮粨鏋滅殑鏃跺�欎細娣诲姞涓�鏉ewDoc,榛樿涓篺alse
         options.upsert(true);
         
         Document NewDoc = new Document("$set", newDoc);  
@@ -127,31 +127,39 @@ public class dbOperations {
 	    insertCollection.insertOne(Doc);
 	}
 	
-	public void UpdateRecord(String Data, String uuid)
+	public void UpdateRecord(String Data, String uuid, boolean IsFromServer)
     {
         Document query = new Document();
         query.put("_id", uuid);
         
         UpdateOptions options = new UpdateOptions();
-        //如果这里是true，当查不到结果的时候会添加一条newDoc,默认为false
+        //濡傛灉杩欓噷鏄痶rue锛屽綋鏌ヤ笉鍒扮粨鏋滅殑鏃跺�欎細娣诲姞涓�鏉ewDoc,榛樿涓篺alse
         options.upsert(true);
         
         Document NewDoc = new Document("$set", Document.parse(Data));  
         dataCollection.updateOne(query, NewDoc,options);
         
-        updateCollection.updateOne(query, NewDoc,options);
+        if(!IsFromServer)
+        {
+        	updateCollection.updateOne(query, NewDoc,options);
+        }
     }
 	
-	public void DeleteRecord(String Data)
+	public void DeleteRecord(String Data, boolean IsFromServer)
 	{
 	    UpdateOptions options = new UpdateOptions();
-        //如果这里是true，当查不到结果的时候会添加一条newDoc,默认为false
+        //濡傛灉杩欓噷鏄痶rue锛屽綋鏌ヤ笉鍒扮粨鏋滅殑鏃跺�欎細娣诲姞涓�鏉ewDoc,榛樿涓篺alse
         options.upsert(true);
 	    Document Doc = Document.parse(Data);
         dataCollection.deleteOne(Doc);
+        insertCollection.deleteOne(Doc);
+        updateCollection.deleteOne(Doc);
         
-        Document NewDoc = new Document("$set", Document.parse(Data));
-        deleteCollection.updateOne(Doc,NewDoc,options);
+        if(!IsFromServer)
+        {
+        	Document NewDoc = new Document("$set", Document.parse(Data));
+        	deleteCollection.updateOne(Doc,NewDoc,options);
+        }
        
 	}
 	

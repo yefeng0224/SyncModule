@@ -26,19 +26,19 @@ public class Test {
 		
 		JSONObject item11 = new JSONObject();
         item11.put("time", df.format(date));
-        item11.put("title", "first test");
+        item11.put("title", "second test");
         mySync.InsertItem(item11);
 		
         
 		JSONObject item2 = new JSONObject();
         item2.put("time", "20160630");
-        item2.put("title", "second test");
+        item2.put("title", "third test");
         String uuid = UUID.randomUUID().toString().replace("-", "");
         mySync.UpdateItem(item2,uuid);
         
         JSONObject item3 = new JSONObject();
         item3.put("time", "20160601");
-        item3.put("title", "third test");
+        item3.put("title", "fourth test");
         String uuid2 = UUID.randomUUID().toString().replace("-", "");
         mySync.UpdateItem(item3,uuid2);
 		
