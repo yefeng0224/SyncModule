@@ -10,8 +10,10 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Iterator;
 import java.util.UUID;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class syncMoudle {
@@ -110,6 +112,30 @@ public class syncMoudle {
 	    System.out.println("UpdateVersion: " + newVersion);
 	    version = newVersion;
 	    db.UpdateVersion(newVersion);
+	}
+	
+	public void UpdateFromServer(JSONArray newArray, JSONArray deleteArray)
+	{
+	    JSONObject jsonItem;
+	    JSONObject jsonData;
+	    JSONObject jsonResult;
+	    String uuid;
+	    String key;
+	    for(int i = 0; i < newArray.length(); i++)
+	    {
+	        jsonData = newArray.getJSONObject(i);
+	        Iterator it = jsonData.keys();  
+	        while(it.hasNext()){ 
+	           key = it.next().toString();
+	           System.out.println(key);  
+	           System.out.println(jsonData.get(key));
+	        }  
+	    }
+	    
+	    for(int i = 0; i < deleteArray.length(); i++)
+	    {
+	        
+	    }
 	}
 	
 	public void DropCollections()

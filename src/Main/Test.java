@@ -24,6 +24,12 @@ public class Test {
 		item.put("title", "first test");
 		mySync.InsertItem(item);
 		
+		JSONObject item11 = new JSONObject();
+        item11.put("time", df.format(date));
+        item11.put("title", "first test");
+        mySync.InsertItem(item11);
+		
+        
 		JSONObject item2 = new JSONObject();
         item2.put("time", "20160630");
         item2.put("title", "second test");
@@ -31,6 +37,7 @@ public class Test {
         mySync.UpdateItem(item2,uuid);
         
         JSONObject item3 = new JSONObject();
+        item3.put("time", "20160601");
         item3.put("title", "third test");
         String uuid2 = UUID.randomUUID().toString().replace("-", "");
         mySync.UpdateItem(item3,uuid2);
@@ -40,11 +47,12 @@ public class Test {
 		try {
 			String result = mySync.PostChangeList("http://127.0.0.1:3000/test");
 			System.out.println(result);
-			if(!result.contains("Server_Fail"))
+			if(!result.contains("Server_Fail") && result.startsWith("{\"version\""))
 			{
 			    mySync.DropCollections();
 			    JSONObject serverRes = new JSONObject(result);
                 mySync.UpdateVersion(serverRes.getInt("version"));
+                mySync.UpdateFromServer(serverRes.getJSONArray("new"), serverRes.getJSONArray("delete"));
 			}
 			
 		} catch (IOException e) {
@@ -52,6 +60,7 @@ public class Test {
 			e.printStackTrace();
 		}
 		
+		/*
 		Date date2=new Date();
         SimpleDateFormat df2=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         JSONObject item22 = new JSONObject();
@@ -86,7 +95,7 @@ public class Test {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-		
+		*/
 		System.out.println("end");
 	}
 }
